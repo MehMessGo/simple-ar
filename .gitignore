@@ -3,5 +3,8 @@
 *.png
 *.jpg
 
+### Video ###
+*.mp4
+
 ### Python ###
 *pyc
