@@ -54,9 +54,9 @@ def main():
     points_paste = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
 
     # Стартова модель - квадрат - описывающий acuro маркер в пространстве
-    model_points = np.array([[0, 0, 0], [100, 0, 0], [100, 100, 0], [0, 100, 0]], dtype=np.float32)
+    model_points = np.array([[-50, -50, 0], [50, -50, 0], [50, 50, 0], [-50, 50, 0]], dtype=np.float32)
     # Точки которые должны быть перемещены в новую позицую
-    points3d = np.array([(0.0, 50.0, -50.0), (0.0, 50.0, -100.0), (100.0, 50.0, -100.0), (100.0, 50.0, -50.0)])
+    points3d = np.array([(-50.0, -50.0, -100.0), (50.0, -50.0, -100.0), (50.0, 50.0, 0.0), (-50.0, 50.0, 0.0)])
 
     camera_matrix = np.array([[photo_bgr.shape[1], 0, photo_bgr.shape[1] / 2],
                               [0, photo_bgr.shape[1], photo_bgr.shape[0] / 2],
@@ -68,15 +68,10 @@ def main():
     while cv2.waitKey(1) != 27:  # пока не нажат #ESC
         photo_bgr = read_input(input_type, source)
 
-        markerCorners, markerIds, rejectedCandidates = cv2.aruco.detectMarkers(photo_bgr, dictionary,
-                                                                               parameters=parameters)
+        marker_corners, marker_ids, rejected_candidates = cv2.aruco.detectMarkers(photo_bgr, dictionary,
+                                                                                  parameters=parameters)
 
-        for corners in markerCorners:
-            matrix = cv2.getPerspectiveTransform(points_paste, corners)
-            result = cv2.warpPerspective(img_paste, matrix, photo_bgr.shape[:2][::-1])
-
-            photo_bgr = alpha_blending(photo_bgr, result)
-
+        for corners in marker_corners:
             dist_coeffs = np.zeros((4, 1), dtype=np.float32)
 
             _, rotation_vector, translation_vector = cv2.solvePnP(model_points, corners, camera_matrix,
@@ -84,21 +79,14 @@ def main():
 
             points2D, _ = cv2.projectPoints(points3d, rotation_vector, translation_vector, camera_matrix, dist_coeffs)
 
-            ap = (int(points2D[3][0][0]), int(points2D[3][0][1]))
-            bp = (int(points2D[0][0][0]), int(points2D[0][0][1]))
-            cv2.line(photo_bgr, ap, bp, (255, 255, 255), 5)
+            point2D_array = [[]]
+            for point2D in points2D:
+                point2D_array[0].append([point2D[0][0], point2D[0][1]])
+            points2D = np.array(point2D_array, dtype=np.float32)
 
-            ap = (int(points2D[0][0][0]), int(points2D[0][0][1]))
-            bp = (int(points2D[1][0][0]), int(points2D[1][0][1]))
-            cv2.line(photo_bgr, ap, bp, (255, 255, 255), 5)
-
-            ap = (int(points2D[1][0][0]), int(points2D[1][0][1]))
-            bp = (int(points2D[2][0][0]), int(points2D[2][0][1]))
-            cv2.line(photo_bgr, ap, bp, (255, 255, 255), 5)
-
-            ap = (int(points2D[2][0][0]), int(points2D[2][0][1]))
-            bp = (int(points2D[3][0][0]), int(points2D[3][0][1]))
-            cv2.line(photo_bgr, ap, bp, (255, 255, 255), 5)
+            matrix = cv2.getPerspectiveTransform(points_paste, points2D)
+            result = cv2.warpPerspective(img_paste, matrix, photo_bgr.shape[:2][::-1])
+            photo_bgr = alpha_blending(photo_bgr, result)
 
         cv2.imshow('frame', photo_bgr)
 
