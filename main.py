@@ -1,3 +1,4 @@
+from modules import ar
 import modules
 
 import os
@@ -15,7 +16,7 @@ def alpha_blending(background, foreground, alpha=None):
     Возвращает image - результат наложения
     """
     if alpha is None and foreground.shape[2] == 4:
-        alpha = foreground[:, :, 3] // 255
+        alpha = foreground[:, :, 3] / 255
 
     image = np.copy(background)
     image[:, :, 0] = image[:, :, 0] * (1 - alpha) + foreground[:, :, 0] * alpha
@@ -49,43 +50,31 @@ def main():
     input_type, source = modules.get_input()
     photo_bgr = read_input(input_type, source)
 
-    img_paste = cv2.imread('input.png', cv2.IMREAD_UNCHANGED)
-    h, w = img_paste.shape[:2]
-    points_paste = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
+    ar_tool = ar.ArucoAR()
 
-    # Стартова модель - квадрат - описывающий acuro маркер в пространстве
-    model_points = np.array([[-50, -50, 0], [50, -50, 0], [50, 50, 0], [-50, 50, 0]], dtype=np.float32)
+    ar_tool.add_paste_image(cv2.imread('input.png', cv2.IMREAD_UNCHANGED), 0)
+    ar_tool.add_paste_image(cv2.imread('input2.png', cv2.IMREAD_UNCHANGED), 1)
+
     # Точки которые должны быть перемещены в новую позицую
-    points3d = np.array([(-50.0, -50.0, -100.0), (50.0, -50.0, -100.0), (50.0, 50.0, 0.0), (-50.0, 50.0, 0.0)])
+    ar_tool.points3D = np.array([(-50.0, -50.0, -80.0), (50.0, -50.0, -80.0), (50.0, 50.0, 0.0), (-50.0, 50.0, 0.0)])
 
-    camera_matrix = np.array([[photo_bgr.shape[1], 0, photo_bgr.shape[1] / 2],
-                              [0, photo_bgr.shape[1], photo_bgr.shape[0] / 2],
-                              [0, 0, 1]], dtype=np.float32)
+    ar_tool.camera_matrix = np.array([[photo_bgr.shape[1], 0, photo_bgr.shape[1] / 2],
+                                      [0, photo_bgr.shape[1], photo_bgr.shape[0] / 2],
+                                      [0, 0, 1]], dtype=np.float32)
 
-    dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_6X6_250)
-    parameters = cv2.aruco.DetectorParameters_create()
+    ar_tool.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_6X6_250)
 
     while cv2.waitKey(1) != 27:  # пока не нажат #ESC
         photo_bgr = read_input(input_type, source)
 
-        marker_corners, marker_ids, rejected_candidates = cv2.aruco.detectMarkers(photo_bgr, dictionary,
-                                                                                  parameters=parameters)
+        markers = ar_tool.coordinate_transformation(photo_bgr)
+        for marker in markers:
+            marker_id = marker[0]
+            point2D_array = marker[1]
 
-        for corners in marker_corners:
-            dist_coeffs = np.zeros((4, 1), dtype=np.float32)
+            matrix = cv2.getPerspectiveTransform(ar_tool.img_paste_dictionary[marker_id][1], point2D_array)
+            result = cv2.warpPerspective(ar_tool.img_paste_dictionary[marker_id][0], matrix, photo_bgr.shape[:2][::-1])
 
-            _, rotation_vector, translation_vector = cv2.solvePnP(model_points, corners, camera_matrix,
-                                                                  dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
-
-            points2D, _ = cv2.projectPoints(points3d, rotation_vector, translation_vector, camera_matrix, dist_coeffs)
-
-            point2D_array = [[]]
-            for point2D in points2D:
-                point2D_array[0].append([point2D[0][0], point2D[0][1]])
-            points2D = np.array(point2D_array, dtype=np.float32)
-
-            matrix = cv2.getPerspectiveTransform(points_paste, points2D)
-            result = cv2.warpPerspective(img_paste, matrix, photo_bgr.shape[:2][::-1])
             photo_bgr = alpha_blending(photo_bgr, result)
 
         cv2.imshow('frame', photo_bgr)
