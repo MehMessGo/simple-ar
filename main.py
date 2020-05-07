@@ -52,30 +52,34 @@ def main():
 
     ar_tool = ar.ArucoAR()
 
-    ar_tool.add_paste_image(cv2.imread('input.png', cv2.IMREAD_UNCHANGED), 0)
-    ar_tool.add_paste_image(cv2.imread('input2.png', cv2.IMREAD_UNCHANGED), 1)
+    ar_tool.add_paste_image(cv2.imread('input.png', cv2.IMREAD_UNCHANGED), 0, np.array(
+        [(-50.0, -50.0, -80.0), (50.0, -50.0, -80.0), (50.0, 50.0, 0.0), (-50.0, 50.0, 0.0)]))
 
-    # Точки которые должны быть перемещены в новую позицую
-    ar_tool.points3D = np.array([(-50.0, -50.0, -80.0), (50.0, -50.0, -80.0), (50.0, 50.0, 0.0), (-50.0, 50.0, 0.0)])
 
     ar_tool.camera_matrix = np.array([[photo_bgr.shape[1], 0, photo_bgr.shape[1] / 2],
                                       [0, photo_bgr.shape[1], photo_bgr.shape[0] / 2],
                                       [0, 0, 1]], dtype=np.float32)
 
-    ar_tool.dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_6X6_250)
+    ar_tool.aruco_dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_6X6_250)
 
     while cv2.waitKey(1) != 27:  # пока не нажат #ESC
         photo_bgr = read_input(input_type, source)
 
-        markers = ar_tool.coordinate_transformation(photo_bgr)
-        for marker in markers:
-            marker_id = marker[0]
-            point2D_array = marker[1]
 
-            matrix = cv2.getPerspectiveTransform(ar_tool.img_paste_dictionary[marker_id][1], point2D_array)
-            result = cv2.warpPerspective(ar_tool.img_paste_dictionary[marker_id][0], matrix, photo_bgr.shape[:2][::-1])
+        marker_corners, marker_ids, rejected_candidates = cv2.aruco.detectMarkers(photo_bgr, ar_tool.aruco_dictionary,
+                                                                                  parameters=ar_tool.parameters)
+        if marker_ids is not None:
+            for _id in marker_ids:
+                _id = _id[0]
+                for i in ar_tool.img_paste_dictionary[_id]:
+                    markers = ar_tool.coordinate_transformation(i[2], marker_corners, marker_ids)
+                    for marker in markers:
+                        marker_id = marker[0]
+                        point2D_array = marker[1]
 
-            photo_bgr = alpha_blending(photo_bgr, result)
+                        matrix = cv2.getPerspectiveTransform(i[1], point2D_array)
+                        result = cv2.warpPerspective(i[0], matrix, photo_bgr.shape[:2][::-1])
+                        photo_bgr = alpha_blending(photo_bgr, result)
 
         cv2.imshow('frame', photo_bgr)
 

@@ -4,11 +4,8 @@ import cv2
 
 class AR(object):
     def __init__(self):
-        # Стартова модель - квадрат - описывающий acuro маркер в пространстве
+        # Стартова модель - квадрат - описывающий aruco маркер в пространстве
         self.start_plane = np.array([[-50, -50, 0], [50, -50, 0], [50, 50, 0], [-50, 50, 0]], dtype=np.float32)
-
-        # Точки которые должны быть перемещены в новую позицую
-        self.points3D = None
 
         self.camera_matrix = None
         self.type_detection = 'aruco'
@@ -19,17 +16,17 @@ class AR(object):
 class ArucoAR(AR):
     def __init__(self):
         self.parameters = cv2.aruco.DetectorParameters_create()
-        self.dictionary = None
+        self.aruco_dictionary = None
         super().__init__()
 
-    def add_paste_image(self, image, aruco_id):
+    def add_paste_image(self, image, aruco_id, points_3d):
         h, w = image.shape[:2]
         points_paste = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
-        self.img_paste_dictionary[aruco_id] = [image, points_paste]
+        if aruco_id not in self.img_paste_dictionary:
+            self.img_paste_dictionary[aruco_id] = []
+        self.img_paste_dictionary[aruco_id].append([image, points_paste, points_3d])
 
-    def coordinate_transformation(self, image):
-        marker_corners, marker_ids, rejected_candidates = cv2.aruco.detectMarkers(image, self.dictionary,
-                                                                                  parameters=self.parameters)
+    def coordinate_transformation(self, points_3d, marker_corners, marker_ids):
         markers = []
         for _id in range(len(marker_corners)):
             point2D_array = [[]]
@@ -39,7 +36,7 @@ class ArucoAR(AR):
                                                                   self.camera_matrix,
                                                                   dist_coeffs, flags=cv2.SOLVEPNP_ITERATIVE)
 
-            points2D, _ = cv2.projectPoints(self.points3D, rotation_vector, translation_vector,
+            points2D, _ = cv2.projectPoints(points_3d, rotation_vector, translation_vector,
                                             self.camera_matrix,
                                             dist_coeffs)
 
