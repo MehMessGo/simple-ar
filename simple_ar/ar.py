@@ -7,11 +7,14 @@ class AR(object):
         """AR
 
         Атрибуты:
-            start_plane:  набор 3d точек описывающих маркер в пространстве
+            start_plane:  набор 3d точек описывающих маркер в пространстве.
+            camera_matrix: матрица камеры/
+            dist_coeffs: Дисторсия камеры.
+            img_paste_dictionary: параметры изображений для рисования на маркере.
             type-detection: Метод детектирования объектов:
                                 aruco: аруко-маркеры.
-            img_paste_dictionary: параметры изображений для рисования на маркере.
         """
+
         self.start_plane = np.array([[-50, -50, 0], [50, -50, 0], [50, 50, 0], [-50, 50, 0]], dtype=np.float32)
         self.camera_matrix = None
         self.dist_coeffs = np.zeros((4, 1), dtype=np.float32)
@@ -101,9 +104,24 @@ class ArucoAR(AR):
 
         return point2D_array
 
+    def draw_on_markers(self, image):
+        marker_corners, marker_ids, _ = cv2.aruco.detectMarkers(image,
+                                                                self.aruco_dictionary,
+                                                                parameters=self.parameters)
+        for i in range(len(marker_corners)):
+            if marker_ids[i][0] in self.img_paste_dictionary:
+                for marker_properties in self.img_paste_dictionary[marker_ids[i][0]]:
+                    point2D_array = self.coordinate_transformation(marker_properties[2],
+                                                                   marker_corners[i],
+                                                                   marker_ids[i][0])
+
+                    matrix = cv2.getPerspectiveTransform(marker_properties[1], point2D_array)
+                    result = cv2.warpPerspective(marker_properties[0], matrix, image.shape[:2][::-1])
+                    image = self.alpha_blending(image, result)
+
+        return image
 
     def aruco_generator(self, marker_id, size):
         marker_image = np.zeros((size, size), dtype=np.uint8)
         marker_image = cv2.aruco.drawMarker(self.aruco_dictionary, marker_id, size, marker_image, 1)
         return marker_image
-
