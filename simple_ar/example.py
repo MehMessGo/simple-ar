@@ -85,7 +85,7 @@ def example():
                                       [0, photo_bgr.shape[1], photo_bgr.shape[0] / 2],
                                       [0, 0, 1]], dtype=np.float32)
 
-    ar_tool.add_image_paste(cv2.imread('input.png', cv2.IMREAD_UNCHANGED), 0, np.array(
+    ar_tool.add_image_paste(cv2.imread('../example.png', cv2.IMREAD_UNCHANGED), 0, np.array(
         [(-50.0, 0.0, -80.0), (50.0, 0.0, -80.0), (50.0, 0.0, 0.0), (-50.0, 0.0, 0.0)]))
 
     while cv2.waitKey(1) != 27:  # пока не нажат #ESC
