@@ -39,7 +39,7 @@ class AR(object):
 
 
 class ArucoAR(AR):
-    def __init__(self):
+    def __init__(self, aruco_dictionary):
         """AR
 
         Атрибуты:
@@ -47,7 +47,7 @@ class ArucoAR(AR):
             aruco_dictionary: словарь аруко маркеров (cv2.aruco.DICT_NXN_NNN).
         """
         self.parameters = cv2.aruco.DetectorParameters_create()
-        self.aruco_dictionary = None
+        self.aruco_dictionary = aruco_dictionary
         super().__init__()
 
     def add_image_paste(self, image, aruco_id, points_3d):
@@ -92,7 +92,7 @@ class ArucoAR(AR):
 
         points2D, _ = cv2.projectPoints(points3D, rotation_vector, translation_vector,
                                         self.camera_matrix,
-                                        dist_coeffs)
+                                        self.dist_coeffs)
 
         for point2D in points2D:
             point2D_array[0].append([point2D[0][0], point2D[0][1]])
@@ -100,3 +100,10 @@ class ArucoAR(AR):
         point2D_array = np.array(point2D_array, dtype=np.float32)
 
         return point2D_array
+
+
+    def aruco_generator(self, marker_id, size):
+        marker_image = np.zeros((size, size), dtype=np.uint8)
+        marker_image = cv2.aruco.drawMarker(self.aruco_dictionary, marker_id, size, marker_image, 1)
+        return marker_image
+
