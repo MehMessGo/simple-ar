@@ -1,5 +1,12 @@
 <h1 align="center">simple_ar</H1>
+
 <p align="center">
+<img alt="License: MIT" src="https://img.shields.io/badge/Made%20with-Python-blue">
+<img alt="License: MIT" src="https://img.shields.io/github/repo-size/MehMessGo/simple-ar">
+<a href="https://github.com/MehMessGo/simple_ar/blob/master/LICENSEE">
+  <img alt="License: MIT" src="https://img.shields.io/github/license/MehMessGo/simple-ar">
+</a>
+</br>
 Python3-модуль для обнаружения маркеров на OpenCV
 </p>
 
