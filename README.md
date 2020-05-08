@@ -1,6 +1,12 @@
-# simple_ar
-AR Python3-модуль для обнаружения маркеров на OpenCV
+<h1 align="center">simple_ar</H1>
+<p align="center">
+Python3-модуль для обнаружения маркеров на OpenCV
+</p>
 
-Обнаружение аруко маркеров:
+Аруко маркеры:</br>
+&nbsp; Генерация, поиск, отрисовка изображения в пространстве</br></br>
+<img src="https://github.com/MehMessGo/simple_ar/blob/master/example.png" width="400" ></br></br>
+пример: https://github.com/MehMessGo/simple_ar/blob/master/simple_ar/example.py
 
-![alt text](https://github.com/MehMessGo/simple_ar/blob/master/example.png?raw=true)
+## Установка
+git clone https://github.com/MehMessGo/simple_ar.git
