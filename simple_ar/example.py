@@ -1,3 +1,10 @@
+"""
+:authors: Michael Pakhmurin
+:license: MIT License, see LICENSE file
+
+:copyright: (c) 2020 Michael Pakhmurin
+"""
+
 import simple_ar
 
 import numpy as np
