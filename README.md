@@ -1,4 +1,4 @@
-<h1 align="center">simple_ar</H1>
+<h1 align="center">Simple_ar</H1>
 
 <p align="center">
 <img alt="Made with Python" src="https://img.shields.io/badge/Made%20with-Python-blue">
