@@ -61,8 +61,7 @@ def read_input(input_type, source):
 
     Аргументы:
         input_type: '1'/'2' - изображение/видео
-        source: для файла указать путь: 'image.jpg' или 'video.mp4.
-            для камеры: 0-9 - номер камеры или '192.168.0.xxx:port' - для ip камеры
+        source: изображение или cv2.VideoCapture для видео
 
     Возвращает image - считанное изображение
     """
